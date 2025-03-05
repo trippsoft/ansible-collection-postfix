@@ -1,0 +1,22 @@
+---
+- name: Allow firewalld SMTP service
+  when:
+    - not postfix_inet_interfaces_loopback_only
+    - postfix_smtp_listening_port | int == 25
+  become: true
+  ansible.posix.firewalld:
+    service: smtp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Allow firewalld SMTP port
+  when:
+    - not postfix_inet_interfaces_loopback_only
+    - postfix_smtp_listening_port | int != 25
+  become: true
+  ansible.posix.firewalld:
+    port: "{{ postfix_smtp_listening_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled

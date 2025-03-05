@@ -1,0 +1,28 @@
+---
+galaxy_info:
+  author: Jim Tarpley (@trippsc2)
+  namespace: trippsc2
+  role_name: install
+  description: This role installs and does initial configuration for Postfix.
+  license: MIT
+
+  min_ansible_version: '2.16'
+
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+    - name: EL
+      versions:
+        - '8'
+        - '9'
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+
+collections: []
+
+dependencies: []

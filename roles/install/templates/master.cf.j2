@@ -1,0 +1,5 @@
+{{ ansible_managed | comment }}
+
+{% for config in postfix_master_process_config %}
+{{ config.service }}  {{ config.type }}  {{ config.private | default(true) | ternary("-", "n") }}  {{ config.unprivileged | default(true) | ternary("-", "n") }}  {{ config.chroot | default(false) | ternary("y", "n") }}  {{ config.wakeup_time | default("-") }}  {{ config.max_processes | default("-") }}  {{ config.command }}
+{% endfor %}

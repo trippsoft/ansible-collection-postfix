@@ -1,0 +1,21 @@
+---
+- name: Set pre-configuration on Debian-based systems
+  when:
+    - ansible_os_family == 'Debian'
+  become: true
+  ansible.builtin.debconf:
+    name: postfix
+    question: postfix/main_mailer_type
+    vtype: string
+    value: No configuration
+
+- name: Install Postfix
+  become: true
+  ansible.builtin.package:
+    name: 
+      - postfix
+    state: present
+
+- name: Gather package facts
+  become: true
+  ansible.builtin.package_facts:

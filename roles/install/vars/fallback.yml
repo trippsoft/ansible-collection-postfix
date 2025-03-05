@@ -1,0 +1,6 @@
+---
+_postfix_os_tested: false
+
+_postfix_default_firewall_type: firewalld
+_postfix_default_compatibility_level: 2
+_postfix_default_daemon_directory: /usr/libexec/postfix

@@ -1,0 +1,55 @@
+---
+- name: Prepare Vault
+  hosts:
+    - vault
+  roles:
+    - role: trippsc2.hashi_vault.testing_ca
+
+- name: Prepare
+  hosts:
+    - subjects
+  pre_tasks:
+    - name: Create postfix group
+      become: true
+      ansible.builtin.group:
+        name: "{{ postfix_group | default('postfix') }}"
+        state: present
+        system: true
+
+    - name: Create postfix user
+      become: true
+      ansible.builtin.user:
+        name: "{{ postfix_user | default('postfix') }}"
+        group: "{{ postfix_group | default('postfix') }}"
+        state: present
+        system: true
+        password: '!'
+        password_lock: true
+        home: /var/spool/postfix
+        shell: /usr/sbin/nologin
+        createhome: false
+  roles:
+    - role: trippsc2.hashi_vault.signed_certificate
+      vars:
+        cert_private_key_path: "{{ postfix_smtpd_tls_key_file }}"
+        cert_private_key_owner: "{{ postfix_user | default('postfix') }}"
+        cert_private_key_group: "{{ postfix_group | default('postfix') }}"
+        cert_private_key_mode: '0600'
+        cert_certificate_path: "{{ postfix_smtpd_tls_cert_file }}"
+        cert_certificate_owner: "{{ postfix_user | default('postfix') }}"
+        cert_certificate_group: "{{ postfix_group | default('postfix') }}"
+        cert_certificate_mode: '0644'
+        cert_subject_common_name: "{{ inventory_hostname }}"
+        cert_subject_alternative_names:
+          - 'DNS:{{ inventory_hostname }}'
+          - 'DNS:{{ ansible_fqdn }}'
+          - 'IP:{{ ansible_host }}'
+        cert_key_usage:
+          - digitalSignature
+          - keyEncipherment
+        cert_extended_key_usage:
+          - serverAuth
+          - clientAuth
+        cert_copy_ca_chain: true
+        cert_ca_chain_path: >-
+          {{ '/etc/pki/ca-trust/source/anchors/vaultca.crt' if ansible_os_family == 'RedHat' else '/usr/local/share/ca-certificates/vaultca.crt' }}

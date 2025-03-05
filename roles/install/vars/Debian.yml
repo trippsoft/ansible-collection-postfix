@@ -1,0 +1,7 @@
+---
+_postfix_os_tested: false
+
+_postfix_default_firewall_type: firewalld
+_postfix_default_compatibility_level: >-
+  {{ ansible_facts.packages.postfix[0].version | regex_replace('^([0-9]+\.[0-9]+)', '\\1') | float }}
+_postfix_default_daemon_directory: /usr/lib/postfix/sbin

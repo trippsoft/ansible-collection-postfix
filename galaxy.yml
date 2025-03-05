@@ -1,0 +1,28 @@
+---
+namespace: trippsc2
+name: postfix
+version: 1.0.0
+readme: README.md
+authors:
+  - Jim Tarpley (@trippsc2)
+description: This collection contains roles for installing and configuring Postfix.
+
+license_file: 'LICENSE'
+
+tags:
+  - infrastructure
+  - linux
+
+dependencies: {}
+
+repository: https://github.com/trippsc2/ansible-collection-postfix.git
+
+manifest:
+  directives:
+    - recursive-include roles/* *.md
+    - recursive-include roles/*/files **
+    - exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json *.tar.gz
+    - recursive-exclude tests/output **
+    - recursive-exclude roles/*/molecule **
+    - recursive-exclude molecule **
+    - global-exclude /.* /__pycache__

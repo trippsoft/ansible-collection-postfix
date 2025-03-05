@@ -1,0 +1,21 @@
+---
+- name: Validate
+  ansible.builtin.import_tasks: validate.yml
+
+- name: Install
+  ansible.builtin.import_tasks: install.yml
+
+- name: Configure
+  ansible.builtin.import_tasks: configure.yml
+
+- name: Configure firewalld
+  when:
+    - postfix_configure_firewall
+    - _postfix_firewall_type == 'firewalld'
+  ansible.builtin.include_tasks: firewalld.yml
+
+- name: Configure ufw
+  when:
+    - postfix_configure_firewall
+    - _postfix_firewall_type == 'ufw'
+  ansible.builtin.include_tasks: ufw.yml

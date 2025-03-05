@@ -1,0 +1,88 @@
+---
+_postfix_compatibility_level: "{{ postfix_compatibility_level | default(_postfix_default_compatibility_level) }}"
+_postfix_daemon_directory: "{{ postfix_daemon_directory | default(_postfix_default_daemon_directory) }}"
+
+_postfix_alias_map_file: >-
+  {{ ['hash:/etc/aliases'] if postfix_use_alias_map_file else [] }}
+_postfix_nis_alias_map: >-
+  {{ ['nis:mail.aliases'] if postfix_use_nis_alias_map else [] }}
+
+_postfix_header_checks_file: >-
+  {{ ['regexp:/etc/postfix/header_checks'] if postfix_use_header_checks_file else [] }}
+
+_postfix_smtpd_tls_mandatory_sslv2: >-
+  {{ [] if postfix_smtpd_tls_mandatory_sslv2_enabled else ['!SSLv2'] }}
+_postfix_smtpd_tls_mandatory_sslv3: >-
+  {{ [] if postfix_smtpd_tls_mandatory_sslv3_enabled else ['!SSLv3'] }}
+_postfix_smtpd_tls_mandatory_tlsv1: >-
+  {{ [] if postfix_smtpd_tls_mandatory_tlsv1_enabled else ['!TLSv1'] }}
+_postfix_smtpd_tls_mandatory_tlsv1_1: >-
+  {{ [] if postfix_smtpd_tls_mandatory_tlsv1_1_enabled else ['!TLSv1.1'] }}
+_postfix_smtpd_tls_mandatory_tlsv1_2: >-
+  {{ [] if postfix_smtpd_tls_mandatory_tlsv1_2_enabled else ['!TLSv1.2'] }}
+_postfix_smtpd_tls_mandatory_tlsv1_3: >-
+  {{ [] if postfix_smtpd_tls_mandatory_tlsv1_3_enabled else ['!TLSv1.3'] }}
+
+_postfix_smtpd_tls_sslv2: >-
+  {{ [] if postfix_smtpd_tls_sslv2_enabled else ['!SSLv2'] }}
+_postfix_smtpd_tls_sslv3: >-
+  {{ [] if postfix_smtpd_tls_sslv3_enabled else ['!SSLv3'] }}
+_postfix_smtpd_tls_tlsv1: >-
+  {{ [] if postfix_smtpd_tls_tlsv1_enabled else ['!TLSv1'] }}
+_postfix_smtpd_tls_tlsv1_1: >-
+  {{ [] if postfix_smtpd_tls_tlsv1_1_enabled else ['!TLSv1.1'] }}
+_postfix_smtpd_tls_tlsv1_2: >-
+  {{ [] if postfix_smtpd_tls_tlsv1_2_enabled else ['!TLSv1.2'] }}
+_postfix_smtpd_tls_tlsv1_3: >-
+  {{ [] if postfix_smtpd_tls_tlsv1_3_enabled else ['!TLSv1.3'] }}
+
+_postfix_smtp_tls_mandatory_sslv2: >-
+  {{ [] if postfix_smtp_tls_mandatory_sslv2_enabled else ['!SSLv2'] }}
+_postfix_smtp_tls_mandatory_sslv3: >-
+  {{ [] if postfix_smtp_tls_mandatory_sslv3_enabled else ['!SSLv3'] }}
+_postfix_smtp_tls_mandatory_tlsv1: >-
+  {{ [] if postfix_smtp_tls_mandatory_tlsv1_enabled else ['!TLSv1'] }}
+_postfix_smtp_tls_mandatory_tlsv1_1: >-
+  {{ [] if postfix_smtp_tls_mandatory_tlsv1_1_enabled else ['!TLSv1.1'] }}
+_postfix_smtp_tls_mandatory_tlsv1_2: >-
+  {{ [] if postfix_smtp_tls_mandatory_tlsv1_2_enabled else ['!TLSv1.2'] }}
+_postfix_smtp_tls_mandatory_tlsv1_3: >-
+  {{ [] if postfix_smtp_tls_mandatory_tlsv1_3_enabled else ['!TLSv1.3'] }}
+
+_postfix_smtp_tls_sslv2: >-
+  {{ [] if postfix_smtp_tls_sslv2_enabled else ['!SSLv2'] }}
+_postfix_smtp_tls_sslv3: >-
+  {{ [] if postfix_smtp_tls_sslv3_enabled else ['!SSLv3'] }}
+_postfix_smtp_tls_tlsv1: >-
+  {{ [] if postfix_smtp_tls_tlsv1_enabled else ['!TLSv1'] }}
+_postfix_smtp_tls_tlsv1_1: >-
+  {{ [] if postfix_smtp_tls_tlsv1_1_enabled else ['!TLSv1.1'] }}
+_postfix_smtp_tls_tlsv1_2: >-
+  {{ [] if postfix_smtp_tls_tlsv1_2_enabled else ['!TLSv1.2'] }}
+_postfix_smtp_tls_tlsv1_3: >-
+  {{ [] if postfix_smtp_tls_tlsv1_3_enabled else ['!TLSv1.3'] }}
+
+_postfix_firewall_type: "{{ postfix_firewall_type | default(_postfix_default_firewall_type) }}"
+
+_postfix_alias_maps: "{{ _postfix_alias_map_file + _postfix_nis_alias_map + postfix_custom_alias_maps }}"
+_postfix_header_checks: "{{ _postfix_header_checks_file + postfix_custom_header_checks }}"
+
+_postfix_smtpd_tls_mandatory_protocols: >-
+  {{ _postfix_smtpd_tls_mandatory_sslv2 + _postfix_smtpd_tls_mandatory_sslv3 +
+      _postfix_smtpd_tls_mandatory_tlsv1 + _postfix_smtpd_tls_mandatory_tlsv1_1 +
+      _postfix_smtpd_tls_mandatory_tlsv1_2 + _postfix_smtpd_tls_mandatory_tlsv1_3 }}
+
+_postfix_smtpd_tls_protocols: >-
+  {{ _postfix_smtpd_tls_sslv2 + _postfix_smtpd_tls_sslv3 +
+      _postfix_smtpd_tls_tlsv1 + _postfix_smtpd_tls_tlsv1_1 +
+      _postfix_smtpd_tls_tlsv1_2 + _postfix_smtpd_tls_tlsv1_3 }}
+
+_postfix_smtp_tls_mandatory_protocols: >-
+  {{ _postfix_smtp_tls_mandatory_sslv2 + _postfix_smtp_tls_mandatory_sslv3 +
+      _postfix_smtp_tls_mandatory_tlsv1 + _postfix_smtp_tls_mandatory_tlsv1_1 +
+      _postfix_smtp_tls_mandatory_tlsv1_2 + _postfix_smtp_tls_mandatory_tlsv1_3 }}
+
+_postfix_smtp_tls_protocols: >-
+  {{ _postfix_smtp_tls_sslv2 + _postfix_smtp_tls_sslv3 +
+      _postfix_smtp_tls_tlsv1 + _postfix_smtp_tls_tlsv1_1 +
+      _postfix_smtp_tls_tlsv1_2 + _postfix_smtp_tls_tlsv1_3 }}

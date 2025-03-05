@@ -1,0 +1,43 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: vagrant
+  provider:
+    name: libvirt
+  cachier: machine
+  parallel: true
+platforms:
+  - name: linux
+    box: jtarpley/${MOLECULE_BOX:-rocky9_cis}
+    memory: 2048
+    cpus: 2
+    provider_options:
+      default_prefix: postfix_install_
+    groups:
+      - subjects
+  - name: vault
+    box: jtarpley/rocky9_cis
+    memory: 2048
+    cpus: 2
+    provider_options:
+      default_prefix: postfix_install_
+provisioner:
+  name: ansible
+  inventory:
+    group_vars:
+      all:
+        vault_token: 47542cbc-6bf8-4fba-8eda-02e0a0d29a0a
+        vault_url: "http://{{ hostvars['vault'].ansible_host }}:8200"
+      subjects:
+        postfix_inet_interfaces_loopback_only: false
+        postfix_inet_interfaces_all: true
+        postfix_smtpd_tls_enabled: true
+        postfix_smtpd_tls_cert_file: >-
+          {{ '/etc/pki/tls/certs/postfix.crt' if ansible_os_family == 'RedHat' else '/etc/ssl/certs/postfix.crt' }}
+        postfix_smtpd_tls_key_file: >-
+          {{ '/etc/pki/tls/private/postfix.key' if ansible_os_family == 'RedHat' else '/etc/ssl/private/postfix.key' }}
+        postfix_smtp_tls_ca_file: >-
+          {{ '/etc/pki/tls/certs/ca-bundle.crt' if ansible_os_family == 'RedHat' else '/etc/ssl/certs/ca-certificates.crt' }}
+verifier:
+  name: ansible

@@ -1,0 +1,722 @@
+---
+argument_specs:
+  main:
+    short_description: Postfix
+    description:
+      - This role installs and does initial configuration for Postfix.
+    author: Jim Tarpley (@trippsc2)
+    options:
+      postfix_configure_firewall:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether to configure the firewall to allow SMTP traffic.
+      postfix_firewall_type:
+        type: str
+        required: false
+        choices:
+          - firewalld
+          - ufw
+        description:
+          - The type of firewall to configure.
+          - On EL and Debian systems, this defaults to `firewalld`.
+          - On Ubuntu systems, this defaults to `ufw`.
+      postfix_compatibility_level:
+        type: float
+        required: false
+        description:
+          - The level of backward compatibility to maintain with older versions of Postfix.
+          - On EL systems, this defaults to `2`.
+          - On Debian-based systems, this defaults to the package major version (e.g. package version `3.7.11-0` would default to a compatibility level of `3.7`).
+      postfix_soft_bounce_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether to enable soft bounce to keep messages in the queue for later delivery.
+          - This is useful for debugging and troubleshooting.
+      postfix_queue_directory:
+        type: path
+        required: false
+        default: /var/spool/postfix
+        description:
+          - The directory where Postfix stores its mail queue.
+          - Unless you have a good reason to change this, you should leave it at the default.
+      postfix_command_directory:
+        type: path
+        required: false
+        default: /usr/sbin
+        description:
+          - The directory where Postfix stores its command binaries.
+          - Unless you have a good reason to change this, you should leave it at the default.
+      postfix_daemon_directory:
+        type: path
+        required: false
+        description:
+          - The directory where Postfix stores its daemon binaries.
+          - Unless you have a good reason to change this, you should leave it at the default.
+          - On EL systems, this defaults to `/usr/libexec/postfix`.
+          - On Debian-based systems, this defaults to `/usr/lib/postfix/sbin`.
+      postfix_data_directory:
+        type: path
+        required: false
+        default: /var/lib/postfix
+        description:
+          - The directory where Postfix stores its data files.
+          - Unless you have a good reason to change this, you should leave it at the default.
+      postfix_mail_owner:
+        type: str
+        required: false
+        default: postfix
+        description:
+          - The user that owns the Postfix mail queue and data directories.
+          - Unless you have a good reason to change this, you should leave it at the default.
+      postfix_default_privs:
+        type: str
+        required: false
+        description:
+          - The default privileges for the Postfix daemon.
+          - If not specified, this will default to `nobody`.
+          - Unless you have a good reason to change this, you should leave it at the default.
+      postfix_myhostname:
+        type: str
+        required: false
+        default: "{{ ansible_fqdn }}"
+        description:
+          - The FQDN of the mail server used as default value for other settings in Postfix.
+      postfix_mydomain:
+        type: str
+        required: false
+        default: "{{ ansible_domain | default('localdomain') }}"
+        description:
+          - The domain name of the mail server used as default value for other settings in Postfix.
+      postfix_myorigin:
+        type: str
+        required: false
+        default: "{{ ansible_domain | default('localdomain') }}"
+        description:
+          - The domain name that Postfix uses as the origin for mail sent from the server.
+      postfix_inet_interfaces_loopback_only:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should listen on the loopback interface only.
+          - If set to `true`, Postfix will listen on the loopback interface only and ignore the `postfix_inet_interfaces_all` and `postfix_inet_interfaces` options.
+          - If set to `false`, the `postfix_inet_interfaces_all` and `postfix_inet_interfaces` option will be used.
+      postfix_inet_interfaces_all:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should listen on all interfaces.
+          - If *postfix_inet_interfaces_loopback_only* is set to `true`, this option is ignored.
+          - If set to `true`, Postfix will listen on all interfaces and ignore the `postfix_inet_interfaces` options.
+          - If set to `false`, `postfix_inet_interfaces` option will be used.
+      postfix_inet_interfaces:
+        type: list
+        required: false
+        elements: str
+        description:
+          - The list of network interface IP addresses that Postfix should listen on.
+          - If *postfix_inet_interfaces_all* or *postfix_inet_interfaces_loopback_only* is set to `true`, this option is ignored.  Otherwise, it is required.
+      postfix_inet_protocols:
+        type: str
+        required: false
+        default: 'all'
+        choices:
+          - all
+          - ipv4
+          - ipv6
+          - ipv4, ipv6
+        description:
+          - The IP address protocols that Postfix should use.
+          - If set to `all`, Postfix will use both IPv4 and IPv6.
+      postfix_proxy_interfaces:
+        type: list
+        required: false
+        elements: str
+        description:
+          - The list of network interface IP addresses that Postfix should consider as proxy interfaces.
+          - If not specified, Postfix will not consider any interfaces as proxy interfaces.
+      postfix_mydestination:
+        type: list
+        required: false
+        default:
+          - $myhostname
+          - localhost.$mydomain
+          - localhost
+        elements: str
+        description:
+          - The list of domains that Postfix considers local and will not relay upstream.
+          - The values `$myhostname` and `$mydomain` are replaced with the values of the `postfix_myhostname` and `postfix_mydomain` options, respectively.
+      postfix_local_recipient_maps:
+        type: list
+        required: false
+        elements: str
+        description:
+          - The list of maps that Postfix uses to determine if a recipient is local.
+          - If not specified, Postfix will not use any maps to determine local recipients.
+      postfix_unknown_local_recipient_reject_code:
+        type: int
+        required: false
+        default: 550
+        description:
+          - The SMTP error code that Postfix should return when a message is sent to an unknown local recipient.
+      postfix_mynetworks_style:
+        type: str
+        required: false
+        default: host
+        choices:
+          - host
+          - subnet
+          - class
+        description:
+          - Defines which networks Postfix considers trusted by default.
+          - If set to `host`, only the local machine is trusted.
+          - If set to `subnet`, all machines on the local subnet are trusted.
+          - If set to `class`, all machines in the same class A/B/C network are trusted.
+      postfix_mynetworks:
+        type: list
+        required: false
+        elements: str
+        default:
+          - '127.0.0.0/8'
+        description:
+          - The list of IP addresses or CIDR ranges that Postfix considers trusted.
+          - This is list is used in conjunction with the `postfix_mynetworks_style` option.
+      postfix_relay_domains:
+        type: list
+        required: false
+        elements: str
+        description:
+          - The list of domains that Postfix should relay mail for.
+          - If not specified, Postfix will not relay mail for any domains.
+      postfix_smtpd_recipient_restrictions:
+        type: list
+        required: false
+        default:
+          - permit_mynetworks
+          - permit_sasl_authenticated
+          - reject_unauth_destination
+          - reject_invalid_hostname
+          - reject_non_fqdn_hostname
+          - reject_non_fqdn_sender
+          - reject_non_fqdn_recipient
+          - reject_unknown_sender_domain
+          - reject_unknown_recipient_domain
+          - reject_rbl_client sbl.spamhaus.org
+          - reject_rbl_client cbl.abuseat.org
+          - reject_rbl_client dul.dnsbl.sorbs.net
+          - permit
+        elements: str
+        description:
+          - The list of restrictions that Postfix should apply to incoming mail recipients.
+          - If not specified, Postfix will not apply any restrictions to incoming mail recipients.
+      postfix_smtpd_sender_restrictions:
+        type: list
+        required: false
+        default:
+          - reject_unknown_sender_domain
+        elements: str
+        description:
+          - The list of restrictions that Postfix should apply to outgoing mail senders.
+          - If not specified, Postfix will not apply any restrictions to outgoing mail senders.
+      postfix_use_relay_recipient_map_file:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should use a relay recipient map file to determine if a recipient is a relay recipient.
+      postfix_in_flow_delay:
+        type: str
+        required: false
+        default: 1s
+        description:
+          - The delay that Postfix should use when a message is received from a client.
+      postfix_use_alias_map_file:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should use an alias map file to determine if a recipient is an alias.
+          - If set to `true`, Postfix will add `hash:/etc/aliases` to the `alias_maps` configuration.
+      postfix_use_nis_alias_map:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should use NIS aliases.
+          - If set to `true`, Postfix will add `nis:mail.aliases` to the `alias_maps` configuration.
+      postfix_custom_alias_maps:
+        type: list
+        required: false
+        default: []
+        elements: str
+        description:
+          - The list of custom alias maps that Postfix should use.
+      postfix_use_header_checks_file:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should use a header checks file to determine if a message header is valid.
+      postfix_custom_header_checks:
+        type: list
+        required: false
+        default: []
+        elements: str
+        description:
+          - The list of custom header checks that Postfix should use.
+      postfix_smtpd_banner:
+        type: str
+        required: false
+        default: $myhostname ESMTP $mail_name
+        description:
+          - The banner that Postfix should display when a client connects to the SMTP server.
+      postfix_debug_peer_level:
+        type: int
+        required: false
+        default: 2
+        description:
+          - The level of debugging that Postfix should use for peer connections.
+      postfix_sendmail_path:
+        type: path
+        required: false
+        default: /usr/sbin/sendmail.postfix
+        description:
+          - The path to the sendmail binary that Postfix should use.
+          - Unless you have a good reason to change this, you should leave it at the default.
+      postfix_newaliases_path:
+        type: path
+        required: false
+        default: /usr/bin/newaliases.postfix
+        description:
+          - The path to the newaliases binary that Postfix should use.
+          - Unless you have a good reason to change this, you should leave it at the default.
+      postfix_mailq_path:
+        type: path
+        required: false
+        default: /usr/bin/mailq.postfix
+        description:
+          - The path to the mailq binary that Postfix should use.
+          - Unless you have a good reason to change this, you should leave it at the default.
+      postfix_setgid_group:
+        type: str
+        required: false
+        default: postdrop
+        description:
+          - The group that Postfix should use to set the group ID.
+      postfix_html_directory:
+        type: path
+        required: false
+        description:
+          - The directory where Postfix stores its HTML documentation.
+      postfix_manpage_directory:
+        type: path
+        required: false
+        default: /usr/share/man
+        description:
+          - The directory where Postfix stores its manual pages.
+      postfix_sample_directory:
+        type: path
+        required: false
+        default: /usr/share/doc/postfix/samples
+        description:
+          - The directory where Postfix stores its sample configuration files.
+      postfix_readme_directory:
+        type: path
+        required: false
+        description:
+          - The directory where Postfix stores its README files.
+      postfix_smtpd_tls_mandatory_sslv2_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should require SSLv2 for incoming SMTP mandatory TLS connections.
+      postfix_smtpd_tls_mandatory_sslv3_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should require SSLv3 for incoming SMTP mandatory TLS connections.
+      postfix_smtpd_tls_mandatory_tlsv1_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should require TLSv1 for incoming SMTP mandatory TLS connections.
+      postfix_smtpd_tls_mandatory_tlsv1_1_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should require TLSv1.1 for incoming SMTP mandatory TLS connections.
+      postfix_smtpd_tls_mandatory_tlsv1_2_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should require TLSv1.2 for incoming SMTP mandatory TLS connections.
+      postfix_smtpd_tls_mandatory_tlsv1_3_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should require TLSv1.3 for incoming SMTP mandatory TLS connections.
+      postfix_smtpd_tls_sslv2_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should allow SSLv2 for incoming SMTP TLS connections.
+      postfix_smtpd_tls_sslv3_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should allow SSLv3 for incoming SMTP TLS connections.
+      postfix_smtpd_tls_tlsv1_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should allow TLSv1 for incoming SMTP TLS connections.
+      postfix_smtpd_tls_tlsv1_1_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should allow TLSv1.1 for incoming SMTP TLS connections.
+      postfix_smtpd_tls_tlsv1_2_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should allow TLSv1.2 for incoming SMTP TLS connections.
+      postfix_smtpd_tls_tlsv1_3_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should allow TLSv1.3 for incoming SMTP TLS connections.
+      postfix_smtp_tls_mandatory_sslv2_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should require SSLv2 for outgoing SMTP mandatory TLS connections.
+      postfix_smtp_tls_mandatory_sslv3_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should require SSLv3 for outgoing SMTP mandatory TLS connections.
+      postfix_smtp_tls_mandatory_tlsv1_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should require TLSv1 for outgoing SMTP mandatory TLS connections.
+      postfix_smtp_tls_mandatory_tlsv1_1_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should require TLSv1.1 for outgoing SMTP mandatory TLS connections.
+      postfix_smtp_tls_mandatory_tlsv1_2_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should require TLSv1.2 for outgoing SMTP mandatory TLS connections.
+      postfix_smtp_tls_mandatory_tlsv1_3_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should require TLSv1.3 for outgoing SMTP mandatory TLS connections.
+      postfix_smtp_tls_sslv2_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should allow SSLv2 for outgoing SMTP TLS connections.
+      postfix_smtp_tls_sslv3_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should allow SSLv3 for outgoing SMTP TLS connections.
+      postfix_smtp_tls_tlsv1_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should allow TLSv1 for outgoing SMTP TLS connections.
+      postfix_smtp_tls_tlsv1_1_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should allow TLSv1.1 for outgoing SMTP TLS connections.
+      postfix_smtp_tls_tlsv1_2_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should allow TLSv1.2 for outgoing SMTP TLS connections.
+      postfix_smtp_tls_tlsv1_3_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Whether Postfix should allow TLSv1.3 for outgoing SMTP TLS connections.
+      postfix_smtpd_tls_enabled:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should enable TLS for incoming SMTP connections.
+      postfix_smtpd_tls_cert_file:
+        type: path
+        required: false
+        description:
+          - The path to the certificate file that Postfix should use for incoming SMTP TLS connections.
+          - If *postfix_smtpd_tls_enabled* is set to `true`, this is required.  Otherwise, it is ignored.
+      postfix_smtpd_tls_key_file:
+        type: path
+        required: false
+        description:
+          - The path to the private key file that Postfix should use for incoming SMTP TLS connections.
+          - If *postfix_smtpd_tls_enabled* is set to `true`, this is required.  Otherwise, it is ignored.
+      postfix_smtpd_tls_security_level:
+        type: str
+        required: false
+        default: may
+        choices:
+          - none
+          - may
+          - encrypt
+        description:
+          - The security level that Postfix should use for incoming SMTP TLS connections.
+          - If *postfix_smtpd_tls_enabled* is set to `false`, this is ignored.
+      postfix_smtp_tls_ca_path:
+        type: path
+        required: false
+        description:
+          - The path to the CA certificate directory that Postfix should use for outgoing SMTP TLS connections.
+      postfix_smtp_tls_ca_file:
+        type: path
+        required: false
+        description:
+          - The path to the CA certificate file that Postfix should use for outgoing SMTP TLS connections.
+      postfix_smtp_tls_security_level:
+        type: str
+        required: false
+        default: may
+        choices:
+          - none
+          - may
+          - encrypt
+          - dane
+          - dane-only
+          - fingerprint
+          - verify
+          - secure
+        description:
+          - The security level that Postfix should use for outgoing SMTP TLS connections.
+      postfix_use_transport_map_file:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Whether Postfix should use a transport map file to determine the transport for a destination.
+      postfix_custom_main_cf:
+        type: str
+        required: false
+        default: ''
+        description:
+          - Custom configuration for the `main.cf` file.
+      postfix_smtp_listening_port:
+        type: int
+        required: false
+        default: 25
+        description:
+          - The port that Postfix should listen on for incoming SMTP connections.
+      postfix_master_process_config:
+        type: list
+        required: false
+        default:
+          - service: "{{ 'smtp' if postfix_smtp_listening_port | int == 25 else postfix_smtp_listening_port }}"
+            type: inet
+            private: false
+            command: smtpd
+          - service: pickup
+            type: unix
+            private: false
+            wakeup_time: 60
+            max_processes: 1
+            command: pickup
+          - service: cleanup
+            type: unix
+            private: false
+            max_processes: 0
+            command: cleanup
+          - service: qmgr
+            type: unix
+            private: false
+            wakeup_time: 300
+            max_processes: 1
+            command: qmgr
+          - service: tlsmgr
+            type: unix
+            wakeup_time: 1000?
+            max_processes: 1
+            command: tlsmgr
+          - service: rewrite
+            type: unix
+            command: trivial-rewrite
+          - service: bounce
+            type: unix
+            command: bounce
+          - service: defer
+            type: unix
+            max_processes: 0
+            command: bounce
+          - service: trace
+            type: unix
+            command: bounce
+          - service: verify
+            type: unix
+            max_processes: 1
+            command: verify
+          - service: flush
+            type: unix
+            private: false
+            wakeup_time: 1000?
+            max_processes: 0
+            command: flush
+          - service: proxymap
+            type: unix
+            command: proxymap
+          - service: proxywrite
+            type: unix
+            max_processes: 1
+            command: proxymap
+          - service: smtp
+            type: unix
+            command: smtp
+          - service: relay
+            type: unix
+            command: smtp -o syslog_name=postfix/$service_name
+          - service: showq
+            type: unix
+            private: false
+            command: showq
+          - service: error
+            type: unix
+            command: error
+          - service: retry
+            type: unix
+            command: error
+          - service: discard
+            type: unix
+            command: discard
+          - service: local
+            type: unix
+            unprivileged: false
+            command: local
+          - service: virtual
+            type: unix
+            unprivileged: false
+            command: virtual
+          - service: lmtp
+            type: unix
+            command: lmtp
+          - service: anvil
+            type: unix
+            max_processes: 1
+            command: anvil
+          - service: scache
+            type: unix
+            max_processes: 1
+            command: scache
+          - service: postlog
+            type: unix
+            private: false
+            max_processes: 1
+            command: postlogd
+        elements: dict
+        description:
+          - The list of services and their configurations for the `master.cf` file.
+        options:
+          service:
+            type: str
+            required: true
+            description:
+              - The name of the service.
+          type:
+            type: str
+            required: true
+            choices:
+              - inet
+              - unix
+              - unix-dgram
+              - pass
+            description:
+              - The type of service.
+          private:
+            type: bool
+            required: false
+            default: true
+            description:
+              - Whether the service is private.
+          unprivileged:
+            type: bool
+            required: false
+            default: true
+            description:
+              - Whether the service is unprivileged.
+          chroot:
+            type: bool
+            required: false
+            default: false
+            description:
+              - Whether the service is chrooted.
+          wakeup_time:
+            type: str
+            required: false
+            description:
+              - The wakeup time for the service.
+          max_processes:
+            type: int
+            required: false
+            description:
+              - The maximum number of processes for the service.
+          command:
+            type: str
+            required: true
+            description:
+              - The command for the service.
+              - This should include any arguments that the command requires.
+      postfix_aliases:
+        type: list
+        required: false
+        default: []
+        elements: dict
+        description:
+          - The list of aliases that Postfix should use.
+        options:
+          name:
+            type: str
+            required: true
+            description:
+              - The alias name.
+          destination:
+            type: str
+            required: true
+            description:
+              - The alias destination.

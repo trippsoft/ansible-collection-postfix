@@ -1,0 +1,47 @@
+---
+- name: Configure aliases
+  loop: "{{ postfix_aliases }}"
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/aliases
+    regexp: "^{{ item.name }}:"
+    line: "{{ item.name }}: {{ item.destination }}"
+    owner: root
+    group: root
+    mode: '0644'
+    state: present
+  notify:
+    - _postfix_rebuild_aliases
+    - _postfix_restart_postfix
+
+- name: Configure main.cf
+  become: true
+  ansible.builtin.template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - _postfix_restart_postfix
+
+- name: Configure master.cf
+  become: true
+  ansible.builtin.template:
+    src: master.cf.j2
+    dest: /etc/postfix/master.cf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - _postfix_restart_postfix
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start Postfix
+  become: true
+  ansible.builtin.systemd_service:
+    name: postfix.service
+    state: started
+    enabled: true

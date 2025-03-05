@@ -1,0 +1,9 @@
+---
+- name: Allow UFW SMTP service
+  when:
+    - not postfix_inet_interfaces_loopback_only
+  become: true
+  community.general.ufw:
+    rule: allow
+    port: "{{ postfix_smtp_listening_port }}"
+    proto: tcp

@@ -1,0 +1,118 @@
+{{ ansible_managed | comment }}
+
+compatibility_level = {{ _postfix_compatibility_level }}
+
+soft_bounce = {{ postfix_soft_bounce_enabled | ternary("yes", "no") }}
+
+queue_directory = {{ postfix_queue_directory }}
+command_directory = {{ postfix_command_directory }}
+daemon_directory = {{ _postfix_daemon_directory }}
+data_directory = {{ postfix_data_directory }}
+
+mail_owner = {{ postfix_mail_owner }}
+{% if postfix_default_privs is defined %}
+default_privs = {{ postfix_default_privs }}
+{% endif %}
+
+myhostname = {{ postfix_myhostname }}
+mydomain = {{ postfix_mydomain }}
+myorigin = {{ postfix_myorigin }}
+
+{% if postfix_inet_interfaces_loopback_only %}
+inet_interfaces = loopback-only
+{% elif postfix_inet_interfaces_all %}
+inet_interfaces = all
+{% else %}
+inet_interfaces = {{ postfix_inet_interfaces | join(", ") }}
+{% endif %}
+inet_protocols = {{ postfix_inet_protocols }}
+{% if postfix_proxy_interfaces is defined %}
+proxy_interfaces = {{ postfix_proxy_interfaces | join(", ") }}
+{% endif %}
+
+mydestination = {{ postfix_mydestination | join(", ") }}
+{% if postfix_local_recipient_maps is defined %}
+local_recipient_maps = {{ postfix_local_recipient_maps | join(" ") }}
+{% endif %}
+unknown_local_recipient_reject_code = {{ postfix_unknown_local_recipient_reject_code }}
+
+mynetworks_style = {{ postfix_mynetworks_style }}
+mynetworks = {{ postfix_mynetworks | join(", ") }}
+{% if postfix_relay_domains is defined %}
+relay_domains = {{ postfix_relay_domains | join(", ") }}
+{% endif %}
+{% if postfix_use_relay_recipient_map_file %}
+relay_recipient_maps = hash:/etc/postfix/relay_recipients
+{% endif %}
+
+smtpd_recipient_restrictions = {{ postfix_smtpd_recipient_restrictions | join(", ") }}
+smtpd_sender_restrictions = {{ postfix_smtpd_sender_restrictions | join(", ") }}
+
+in_flow_delay = {{ postfix_in_flow_delay }}
+{% if _postfix_alias_maps | length > 0 %}
+
+alias_maps = {{ _postfix_alias_maps | join(", ") }}
+{%     if postfix_use_alias_map_file %}
+alias_database = hash:/etc/aliases
+{%     endif %}
+{% endif %}
+{% if _postfix_header_checks | length > 0 %}
+
+header_checks = {{ _postfix_header_checks | join(", ") }}
+{% endif %}
+
+smtpd_banner = {{ postfix_smtpd_banner }}
+
+debug_peer_level = {{ postfix_debug_peer_level }}
+
+debugger_command =
+         PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin
+         ddd $daemon_directory/$process_name $process_id & sleep 5
+
+sendmail_path = {{ postfix_sendmail_path }}
+newaliases_path = {{ postfix_newaliases_path }}
+mailq_path = {{ postfix_mailq_path }}
+
+setgid_group = {{ postfix_setgid_group }}
+
+{% if postfix_html_directory is defined %}
+html_directory = {{ postfix_html_directory }}
+{% endif %}
+manpage_directory = {{ postfix_manpage_directory }}
+sample_directory = {{ postfix_sample_directory }}
+{% if postfix_readme_directory is defined %}
+readme_directory = {{ postfix_readme_directory }}
+{% endif %}
+{% if _postfix_smtpd_tls_mandatory_protocols | length > 0 or
+      _postfix_smtpd_tls_protocols | length > 0 or
+      _postfix_smtp_tls_mandatory_protocols | length > 0 or
+      _postfix_smtp_tls_protocols | length > 0 %}
+
+{%     if _postfix_smtpd_tls_mandatory_protocols | length > 0 %}
+smtpd_tls_mandatory_protocols = {{ _postfix_smtpd_tls_mandatory_protocols | join(", ") }}
+{%     endif %}
+{%     if _postfix_smtpd_tls_protocols | length > 0 %}
+smtpd_tls_protocols = {{ _postfix_smtpd_tls_protocols | join(", ") }}
+{%     endif %}
+{%     if _postfix_smtp_tls_mandatory_protocols | length > 0 %}
+smtp_tls_mandatory_protocols = {{ _postfix_smtp_tls_mandatory_protocols | join(", ") }}
+{%     endif %}
+{%     if _postfix_smtp_tls_protocols | length > 0 %}
+smtp_tls_protocols = {{ _postfix_smtp_tls_protocols | join(", ") }}
+{%     endif %}
+{% endif %}
+{% if postfix_smtpd_tls_enabled %}
+
+smtpd_tls_cert_file = {{ postfix_smtpd_tls_cert_file }}
+smtpd_tls_key_file = {{ postfix_smtpd_tls_key_file }}
+smtpd_tls_security_level = {{ postfix_smtpd_tls_security_level }}
+{% endif %}
+
+{% if postfix_smtp_tls_ca_path is defined %}
+smtp_tls_CApath = {{ postfix_smtp_tls_ca_path }}
+{% endif %}
+{% if postfix_smtp_tls_ca_file is defined %}
+smtp_tls_CAfile = {{ postfix_smtp_tls_ca_file }}
+{% endif %}
+smtp_tls_security_level = {{ postfix_smtp_tls_security_level }}
+{{ postfix_custom_main_cf }}
