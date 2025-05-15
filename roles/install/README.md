@@ -1,7 +1,7 @@
 <!-- BEGIN_ANSIBLE_DOCS -->
 
 # Ansible Role: trippsc2.postfix.install
-Version: 1.0.0
+Version: 1.0.1
 
 This role installs and does initial configuration for Postfix.
 

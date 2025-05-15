@@ -1,5 +1,6 @@
 ---
-_postfix_os_tested: false
+_postfix_os_is_supported: true
+_postfix_os_is_tested: false
 
 _postfix_default_firewall_type: firewalld
 _postfix_default_compatibility_level: 2

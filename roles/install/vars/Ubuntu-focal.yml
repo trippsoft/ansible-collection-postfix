@@ -1,5 +1,6 @@
 ---
-_postfix_os_tested: true
+_postfix_os_is_supported: true
+_postfix_os_is_tested: true
 
 _postfix_default_firewall_type: ufw
 _postfix_default_compatibility_level: >-
