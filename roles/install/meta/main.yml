@@ -20,8 +20,9 @@ galaxy_info:
       versions:
         - noble
         - jammy
-        - focal
 
-collections: []
+collections:
+  - ansible.posix
+  - community.general
 
 dependencies: []

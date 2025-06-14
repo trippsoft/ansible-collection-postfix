@@ -1,7 +1,7 @@
 ---
 namespace: trippsc2
 name: postfix
-version: 1.0.2
+version: 1.0.3
 readme: README.md
 authors:
   - Jim Tarpley (@trippsc2)
@@ -13,9 +13,11 @@ tags:
   - infrastructure
   - linux
 
-dependencies: {}
+dependencies:
+  ansible.posix: '>=1.0.1'
+  community.general: '>=1.0.0'
 
-repository: https://github.com/trippsc2/ansible-collection-postfix.git
+repository: https://github.com/trippsoft/ansible-collection-postfix.git
 
 manifest:
   directives:
