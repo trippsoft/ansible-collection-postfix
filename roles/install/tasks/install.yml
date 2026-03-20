@@ -12,7 +12,7 @@
 - name: Install Postfix
   become: true
   ansible.builtin.package:
-    name: 
+    name:
       - postfix
     state: present
 
