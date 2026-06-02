@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-06-02
+
+### Role - install
+
+- Added support for Debian 13.
+- Added support for Enterprise Linux 10.
+- Added support for Ubuntu 26.04.
+
 ## [1.0.3] - 2025-06-11
 
 ### Collection
